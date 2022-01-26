@@ -29,6 +29,7 @@ UKF::UKF(const double lambda,
     m_alpha = alpha;
     m_beta = 2;  // optimal for gaussian distribution 
     m_eta = sqrt(m_L + lambda);
+    // m_eta = m_L + lambda;
     m_state = state;
 
     // Populate sigma point vector container
@@ -40,11 +41,12 @@ UKF::UKF(const double lambda,
     }
 
     // Compute weights
-    m_state_weights.push_back( lambda / (m_L + lambda) );
-    m_cov_weights.push_back( (lambda / (m_L + lambda)) + (1 - m_alpha * m_alpha + m_beta) );
+    double c = (double) m_L + lambda;
+    m_state_weights.push_back( lambda / c );
+    m_cov_weights.push_back( lambda / c + (1 - m_alpha * m_alpha + m_beta) );
     for (int i = 0; i < n_sigma_points - 1; ++i) {
-        m_state_weights.push_back( 1 / (2 * (m_L + lambda)) );
-        m_cov_weights.push_back( 1 / (2 * (m_L + lambda)) );
+        m_state_weights.push_back( 0.5 / c );
+        m_cov_weights.push_back( 0.5 / c );
     }
 
     // Covariance init
@@ -53,6 +55,7 @@ UKF::UKF(const double lambda,
     m_R = R;
 
     // Inertia matrix init
+    m_M.setZero();
     m_M.block<3, 3>(0, 0) = mass * Matrix3d::Identity();
     m_M.block<3, 3>(3, 3) = I;
     m_M_inv = m_M.inverse();
@@ -82,8 +85,8 @@ void UKF::computeSigmaPoints(const Vector6d& state, const Matrix6d& P)
 {
     m_state_sigma_points[0] = state;
     LLT<Matrix6d> llt(P);
-    Matrix6d L_sqrt = llt.matrixL();
-    Matrix6d sigma_matrix = m_eta * L_sqrt;
+    Matrix6d P_sqrt = llt.matrixL();
+    Matrix6d sigma_matrix = m_eta * P_sqrt;
     for (int i = 0; i < m_L; ++i) {
         m_state_sigma_points[i + 1] = state + sigma_matrix.col(i);  // 1 - 6
         m_state_sigma_points[m_L + i + 1] = state - sigma_matrix.col(i);  // 7 - 12
@@ -97,7 +100,7 @@ Vector6d UKF::propagateState(const Vector6d& state,
     // Compute acceleration
     Vector3d w = state.tail(3);
     Vector6d nonlinear;
-    nonlinear.head(3) = m_gravity;
+    nonlinear.head(3).setZero();  
     nonlinear.tail(3) = w.cross(m_I * w);
     Vector6d state_accel = m_M_inv * (tau - nonlinear);
 
@@ -131,10 +134,11 @@ void UKF::unscentedTransformDynamics()
 void UKF::unscentedTransformSensors()
 {
     int n_points = m_meas_sigma_points.size();
-    Matrix6d R;
+    Matrix6d R = Matrix6d::Zero();
     R.block<3, 3>(0, 0) = m_rot_in_world;
     R.block<3, 3>(3, 3) = m_rot_in_world;
 
+    // Observed sensor readings from state sigma points 
     for (int i = 0; i < n_points; ++i) {
         m_meas_sigma_points[i] = R * m_state_sigma_points[i];
     }

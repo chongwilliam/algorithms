@@ -1,7 +1,7 @@
 # Kalman filter
 cmake_minimum_required(VERSION 3.0)
-set(CMAKE_CXX_FLAGS "-std=c++17 -O3 -I/usr/include/python2.7 -lpython2.7")
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "-std=c++17 -O3")
+set(CMAKE_BUILD_TYPE Release)
 
 project(filter)
 
@@ -24,9 +24,9 @@ elseif (CMAKE_SYSTEM_NAME MATCHES Linux)
 	include_directories("${JSONCPP_INCLUDE_DIRS}")
 endif ()
 
-# matplotlibcpp
-find_package(matplotlib_cpp)
+# plotting
+find_package(sciplot)
 
 add_executable(app test.cpp ukf.cpp redis/RedisClient.cpp filter/ButterworthFilter.cpp)
-target_link_libraries(app ${HIREDIS_LIBRARY} ${JSONCPP_LIBRARIES})
+target_link_libraries(app ${HIREDIS_LIBRARY} ${JSONCPP_LIBRARIES} sciplot::sciplot)
 

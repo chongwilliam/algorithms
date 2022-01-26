@@ -47,8 +47,10 @@ ukf.h
 /home/william/utils/state_estimation/ukf.h
 random
 -
-matplotlibcpp.h
-/home/william/utils/state_estimation/matplotlibcpp.h
+chrono
+-
+sciplot/sciplot.hpp
+-
 
 /home/william/utils/state_estimation/ukf.h
 eigen3/Eigen/Dense

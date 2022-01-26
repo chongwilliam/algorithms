@@ -124,7 +124,7 @@ app: CMakeFiles/app.dir/ukf.cpp.o
 app: CMakeFiles/app.dir/redis/RedisClient.cpp.o
 app: CMakeFiles/app.dir/filter/ButterworthFilter.cpp.o
 app: CMakeFiles/app.dir/build.make
-app: /usr/lib/x86_64-linux-gnu/libhiredis.so
+app: /usr/local/lib/libhiredis.so
 app: CMakeFiles/app.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/william/utils/state_estimation/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable app"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/app.dir/link.txt --verbose=$(VERBOSE)
