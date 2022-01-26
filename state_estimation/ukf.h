@@ -7,13 +7,16 @@
 #include <eigen3/Eigen/Dense>
 #include "redis/RedisClient.h"
 #include "filter/ButterworthFilter.h"
+
 #include <iostream>
+#include <vector>
+using namespace std;
 
 using Vector6d = Eigen::Matrix<double, 6, 1>;
 using Matrix6d = Eigen::Matrix<double, 6, 6>;
 using namespace Eigen;
 
-namespace filter {
+namespace Filter {
 
 class UKF
 {
@@ -21,28 +24,27 @@ class UKF
 		UKF(const double lambda,
 				const double alpha,
 				const double dt,
+				const Vector6d& state,
 				const Matrix6d& P, 
 				const Matrix6d& Q,
 				const Matrix6d& R,
 				const double mass,
 				const Matrix3d& I);
-
 		void updateSensors(const Vector3d& accel, 
 								const Vector3d& gyro,
 								const Vector6d& tau,
 								const Matrix3d& rot_in_world);
+		void filterAccel();
 		void computeSigmaPoints(const Vector6d& state, const Matrix6d& P);
-		Vector6d propagateState(const Vector6d& state, const double dt);
-		Vector6d unscentedTransformDynamics();
-		Vector6d unscentedTransformSensors();
+		Vector6d propagateState(const Vector6d& state, 
+                                	const Vector6d& tau, 
+                                	const double dt);
+		void unscentedTransformDynamics();
+		void unscentedTransformSensors();
+		void updatePosterior();
+		void updateStep();
 
-
-
-
-
-
-
-	private:
+	// private:
 		// UKF setup
 		int m_L;
 		double m_dt;
@@ -77,10 +79,11 @@ class UKF
 		Matrix6d m_M;
 		Matrix6d m_M_inv;
 		Matrix3d m_I;
+		Vector3d m_gravity;
 
 		// Externals 
-		RedisClient redis_client;
-		ButterworthFilter filter;
+		RedisClient* redis_client;
+		ButterworthFilter* filter;
 
 };
 
