@@ -17,20 +17,20 @@ UKF::UKF(const double lambda,
             const double mass,
             const Matrix3d& I)
 {
-    // Initialize redis client
+    // Initialize redis and smoothing filter 
     redis_client = new RedisClient();
     filter = new ButterworthFilter(3);  // cutoff frequency needs to be tuned 
-    double sampling_rate = 1. / 100;
+    // double sampling_rate = 1. / 1000;  // if needed for filter cutoff computation 
     double cutoff_freq = 0.1;
     filter->setCutoffFrequency(cutoff_freq);
 
+    // UKF parameters 
     m_L = 6;
     m_dt = dt;
     m_alpha = alpha;
     m_beta = 2;  // optimal for gaussian distribution 
     m_eta = sqrt(m_L + lambda);
-    // m_eta = m_L + lambda;
-    m_state = state;
+    m_state = state;  // [linear velocity; angular velocity] in inertial frame 
 
     // Populate sigma point vector container
     int n_sigma_points = 1 + 2 * m_L;
@@ -70,15 +70,16 @@ void UKF::updateSensors(const Vector3d& accel,
                             const Vector6d& tau,
                             const Matrix3d& rot_in_world)
 {
-    m_accel = accel;
-    m_gyro = gyro;
-    m_tau = tau;
+    m_accel = accel;  // body frame
+    m_gyro = gyro;  // body frame
+    m_tau = tau;  // inertial frame
     m_rot_in_world = rot_in_world;  // from inertial frame to body frame 
 }
 
 void UKF::filterAccel()
 {
-    m_vel = m_state.head(3) + filter->update(m_accel) * m_dt;
+    m_accel = filter->update(m_accel);
+    m_vel = m_rot_in_world * m_state.head(3) + m_accel * m_dt;  // "velocity" body measurement
 }
 
 void UKF::computeSigmaPoints(const Vector6d& state, const Matrix6d& P)
@@ -88,6 +89,8 @@ void UKF::computeSigmaPoints(const Vector6d& state, const Matrix6d& P)
     Matrix6d P_sqrt = llt.matrixL();
     Matrix6d sigma_matrix = m_eta * P_sqrt;
     for (int i = 0; i < m_L; ++i) {
+        // m_state_sigma_points[i + 1] = state + sigma_matrix.row(i).transpose();  // 1 - 6
+        // m_state_sigma_points[m_L + i + 1] = state - sigma_matrix.row(i).transpose();  // 7 - 12
         m_state_sigma_points[i + 1] = state + sigma_matrix.col(i);  // 1 - 6
         m_state_sigma_points[m_L + i + 1] = state - sigma_matrix.col(i);  // 7 - 12
     }
@@ -110,9 +113,9 @@ Vector6d UKF::propagateState(const Vector6d& state,
 
 void UKF::unscentedTransformDynamics()
 {
-    // Propagate through system dynamics
     int n_points = m_state_sigma_points.size();
-
+    
+    // Propagate through system dynamics
     for (int i = 0; i < n_points; ++i) {
         m_state_sigma_points_prop[i] = propagateState(m_state_sigma_points[i], m_tau, m_dt);
     }
@@ -134,11 +137,12 @@ void UKF::unscentedTransformDynamics()
 void UKF::unscentedTransformSensors()
 {
     int n_points = m_meas_sigma_points.size();
+
     Matrix6d R = Matrix6d::Zero();
-    R.block<3, 3>(0, 0) = m_rot_in_world;
+    R.block<3, 3>(0, 0) = m_rot_in_world;  // inertial to body frame 
     R.block<3, 3>(3, 3) = m_rot_in_world;
 
-    // Observed sensor readings from state sigma points 
+    // Observed body sensor readings from state sigma points 
     for (int i = 0; i < n_points; ++i) {
         m_meas_sigma_points[i] = R * m_state_sigma_points[i];
     }
@@ -166,10 +170,10 @@ void UKF::unscentedTransformSensors()
 
 void UKF::updatePosterior()
 {
-    Vector6d y;
+    Vector6d y;  // body frame sensor measurements 
     y.head(3) = m_vel;
     y.tail(3) = m_gyro;
-    Matrix6d K = m_Pxy * m_Pxy.inverse();
+    Matrix6d K = m_Pxy * m_Pyy.inverse();
     m_state += K * (y - m_meas);
     m_P -= K * m_Pyy * K.transpose();
 }
@@ -179,7 +183,7 @@ void UKF::updateStep()
     filterAccel();
     computeSigmaPoints(m_state, m_P);
     unscentedTransformDynamics();
-    computeSigmaPoints(m_state, m_P);  // redraw sigma points 
+    computeSigmaPoints(m_state, m_P);  // redraw sigma points (optional, but better results)
     unscentedTransformSensors();
     updatePosterior();
 }

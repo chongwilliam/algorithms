@@ -19,8 +19,8 @@ using std::chrono::milliseconds;
 int main()
 {
     // Filter parameters 
-    double alpha = 1e-1;  // 1e-4 to 1e0
-    double ki = 1;  // tunable
+    double alpha = 1e-2;  // 1e-4 to 1e0
+    double ki = 0;  // tunable
     int L = 6;  
     double lambda = alpha * alpha * ((double) L + ki) - (double) L;
     double filter_dt = 1. / 1000;  
@@ -42,9 +42,9 @@ int main()
     M.block<3, 3>(3, 3) = I;
 
     // Simulation 
-    int N = 1000 * 120;  // number of simulation steps
+    int N = 10000 * 300;  // number of simulation steps
     // double dt = 1. / 100;  // filter update frequency 
-    double sim_dt = 1. / 1000;  // simulation frequency
+    double sim_dt = 1. / 10000;  // simulation frequency
     Vector7d pose = Vector7d::Zero();  // position; quaternion (w, x, y, z)
     pose(3) = 1;  // set to identity rotation matrix at the start 
     Vector6d velocity = Vector6d::Zero();
@@ -63,14 +63,14 @@ int main()
     std::default_random_engine generator(seed);
     std::normal_distribution<double> accel_dist(0, accel_noise);
     std::normal_distribution<double> gyro_dist(0, gyro_noise);
-    std::normal_distribution<double> force_dist(1, random_force_noise);
+    std::normal_distribution<double> force_dist(2, random_force_noise);
 
     // Test setup
     const int test = 0;
     auto t1 = high_resolution_clock::now();
     auto t2 = high_resolution_clock::now();
     duration<double, std::milli> ms_double = t2 - t1;
-    int n_skip = 1;
+    int n_skip = 10;  // 1 kHz filter update 
     int n_filter_samples = N / n_skip;
     VectorXd timings(n_filter_samples);
     int cnt = 0;
@@ -96,7 +96,7 @@ int main()
             nonlinear.tail(3) = w_truth.cross(I * w_truth);
             Vector6d accel = M.inverse() * (F[i] - nonlinear);
 
-            // Forward integrate to get velocity (at 1000 Hz vs. 100 Hz)
+            // Forward integrate to get velocity (at 10000 Hz vs. 1000 Hz)
             velocity += accel * sim_dt;
             ground_truth_log.push_back(velocity);
 
@@ -121,9 +121,9 @@ int main()
             q.x() = pose(4);
             q.y() = pose(5);
             q.z() = pose(6);
-            rot_in_world = q.normalized().toRotationMatrix();
+            rot_in_world = q.normalized().toRotationMatrix();  // inertial to body frame 
 
-            // Generate sensor measurements 
+            // Generate sensor measurements in the inertial frame, with added noise  
             Vector3d accel_sensor;
             Vector3d gyro_sensor;
             for (int j = 0; j < 3; ++j) {
@@ -133,8 +133,15 @@ int main()
 
             // Update sensor information and filter (frequency from n_skip)
             if (i % n_skip == 0) {
+                // Naive integration
                 integrated_velocity += accel_sensor * sim_dt;
                 vel_integrated_log.push_back(integrated_velocity);
+
+                // Rotate inertial frame sensor measuremment to body frame
+                accel_sensor = rot_in_world * accel_sensor;
+                gyro_sensor = rot_in_world * gyro_sensor;
+
+                // Filter update
                 t1 = high_resolution_clock::now();
                 state_estimator->updateSensors(accel_sensor, gyro_sensor, F[i], rot_in_world);
                 state_estimator->updateStep();
@@ -209,7 +216,7 @@ int main()
     }
 
     Plot plot0;
-    plot0.size(1280, 720);
+    // plot0.size(1280, 720);
     plot0.fontName("Palatino");
     plot0.fontSize(20);
     plot0.legend()
@@ -219,12 +226,93 @@ int main()
     // plot0.palette("parula");
     plot0.xlabel("Time (s)");
     plot0.ylabel("Inertial X Velocity (m/s)");
-    // plot0.drawCurve(filter_time_vector, vx_est).label("vx est").lineWidth(2);
+    plot0.drawCurve(filter_time_vector, vx_est).label("vx est").lineWidth(2);
     // plot0.drawCurve(filter_time_vector, vx_upper_est);
     // plot0.drawCurvesFilled(filter_time_vector, vx_lower_est, vx_upper_est).label("vx 1-sigma").lineWidth(4);
     plot0.drawCurve(time_vector, vx_true).label("vx true").lineWidth(2);
-    plot0.drawCurve(time_vector, vx_naive).label("vx integrated").lineWidth(2);
-    plot0.show();
+    // plot0.drawCurve(time_vector, vx_naive).label("vx integrated").lineWidth(2);
 
+    Plot plot1;
+    // plot1.size(1280, 720);
+    plot1.fontName("Palatino");
+    plot1.fontSize(20);
+    plot1.legend()
+        .atOutsideBottom()
+        .displayHorizontal()
+        .displayExpandWidthBy(2);
+    // plot0.palette("parula");
+    plot1.xlabel("Time (s)");
+    plot1.ylabel("Inertial Y Velocity (m/s)");
+    plot1.drawCurve(filter_time_vector, vy_est).label("vy est").lineWidth(2);
+    // plot0.drawCurve(filter_time_vector, vx_upper_est);
+    // plot0.drawCurvesFilled(filter_time_vector, vx_lower_est, vx_upper_est).label("vx 1-sigma").lineWidth(4);
+    plot1.drawCurve(time_vector, vy_true).label("vy true").lineWidth(2);
+    // plot0.drawCurve(time_vector, vx_naive).label("vx integrated").lineWidth(2);
+
+    Plot plot2;
+    // plot2.size(1280, 720);
+    plot2.fontName("Palatino");
+    plot2.fontSize(20);
+    plot2.legend()
+        .atOutsideBottom()
+        .displayHorizontal()
+        .displayExpandWidthBy(2);
+    // plot0.palette("parula");
+    plot2.xlabel("Time (s)");
+    plot2.ylabel("Inertial Z Velocity (m/s)");
+    plot2.drawCurve(filter_time_vector, vz_est).label("vz est").lineWidth(2);
+    // plot0.drawCurve(filter_time_vector, vx_upper_est);
+    // plot0.drawCurvesFilled(filter_time_vector, vx_lower_est, vx_upper_est).label("vx 1-sigma").lineWidth(4);
+    plot2.drawCurve(time_vector, vz_true).label("vz true").lineWidth(2);
+    // plot0.drawCurve(time_vector, vx_naive).label("vx integrated").lineWidth(2);
+
+    Plot plot3;
+    // plot3.size(1280, 720);
+    plot3.fontName("Palatino");
+    plot3.fontSize(20);
+    plot3.legend()
+        .atOutsideBottom()
+        .displayHorizontal()
+        .displayExpandWidthBy(2);
+    // plot0.palette("parula");
+    plot3.xlabel("Time (s)");
+    plot3.ylabel("Inertial X Angular Velocity (rad/s)");
+    plot3.drawCurve(filter_time_vector, wx_est).label("wx est").lineWidth(2);
+    plot3.drawCurve(time_vector, wx_true).label("wx true").lineWidth(2);
+
+    Plot plot4;
+    // plot4.size(1280, 720);
+    plot4.fontName("Palatino");
+    plot4.fontSize(20);
+    plot4.legend()
+        .atOutsideBottom()
+        .displayHorizontal()
+        .displayExpandWidthBy(2);
+    // plot0.palette("parula");
+    plot4.xlabel("Time (s)");
+    plot4.ylabel("Inertial Y Angular Velocity (rad/s)");
+    plot4.drawCurve(filter_time_vector, wy_est).label("wy est").lineWidth(2);
+    plot4.drawCurve(time_vector, wy_true).label("wy true").lineWidth(2);
+
+    Plot plot5;
+    // plot5.size(1280, 720);
+    plot5.fontName("Palatino");
+    plot5.fontSize(20);
+    plot5.legend()
+        .atOutsideBottom()
+        .displayHorizontal()
+        .displayExpandWidthBy(2);
+    // plot0.palette("parula");
+    plot5.xlabel("Time (s)");
+    plot5.ylabel("Inertial Z Angular Velocity (rad/s)");
+    plot5.drawCurve(filter_time_vector, wz_est).label("wz est").lineWidth(2);
+    plot5.drawCurve(time_vector, wz_true).label("wz true").lineWidth(2);
+
+    Figure fig = {{ plot0, plot1, plot2 },
+                  { plot3, plot4, plot5 }};
+    fig.title("Filter vs. Truth Comparison");
+    fig.palette("dark2");
+    fig.size(1280, 720);
+    fig.show();
 
 }
