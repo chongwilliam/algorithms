@@ -1,8 +1,7 @@
 """ Test Script """
 from fit import LinearCalibration, NonlinearCalibration
-import autograd.numpy as np 
-from autograd import grad
-import pdb 
+import numpy as np
+import pdb
 
 if __name__ == '__main__':
 	### Linear Case ###
@@ -59,3 +58,19 @@ if __name__ == '__main__':
 	print("True bias: ", b)
 	print("Fit: ")
 	cal.print()
+
+	# ### Actual Case ###
+	# # Setup class
+	# n_sensors = 4
+	# n_data = 14
+	# cal = NonlinearCalibration(n_sensors, n_data)
+	# cal_data = np.loadtxt('torques.txt')
+
+	# # Calibrate sensors
+	# cal.read_data(tau_measured, tau_actual)
+	# cal.fit()
+	# cal.plot()
+
+	# # Print ground truth parameters
+	# print("Fit: ")
+	# cal.print()
