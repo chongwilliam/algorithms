@@ -1,6 +1,5 @@
 """ Fitting Functions """
-import autograd.numpy as np 
-from autograd import grad
+import numpy as np
 from scipy.optimize import least_squares
 import matplotlib.pyplot as plt 
 
@@ -86,8 +85,8 @@ class NonlinearCalibration:
 		return calibrated_data
 
 	def print(self):
-		print("Scale Factor: ", self.symmetric_matrix(self.sol.x[0 : self.n_sensors + self.n_off_diagonal]))
-		print("Bias: ", self.sol.x[self.n_sensors + self.n_off_diagonal: ])
+		print("Scale Factor: \n", self.symmetric_matrix(self.sol.x[0 : self.n_sensors + self.n_off_diagonal]))
+		print("Bias: \n", self.sol.x[self.n_sensors + self.n_off_diagonal: ])
 
 	def plot(self):
 		calibrated_data = self.fit_data(self.measured_data)
