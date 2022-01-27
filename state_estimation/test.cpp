@@ -218,7 +218,7 @@ int main()
     Plot plot0;
     // plot0.size(1280, 720);
     plot0.fontName("Palatino");
-    plot0.fontSize(20);
+    plot0.fontSize(14);
     plot0.legend()
         .atOutsideBottom()
         .displayHorizontal()
@@ -235,7 +235,7 @@ int main()
     Plot plot1;
     // plot1.size(1280, 720);
     plot1.fontName("Palatino");
-    plot1.fontSize(20);
+    plot1.fontSize(14);
     plot1.legend()
         .atOutsideBottom()
         .displayHorizontal()
@@ -252,7 +252,7 @@ int main()
     Plot plot2;
     // plot2.size(1280, 720);
     plot2.fontName("Palatino");
-    plot2.fontSize(20);
+    plot2.fontSize(14);
     plot2.legend()
         .atOutsideBottom()
         .displayHorizontal()
@@ -269,7 +269,7 @@ int main()
     Plot plot3;
     // plot3.size(1280, 720);
     plot3.fontName("Palatino");
-    plot3.fontSize(20);
+    plot3.fontSize(14);
     plot3.legend()
         .atOutsideBottom()
         .displayHorizontal()
@@ -283,7 +283,7 @@ int main()
     Plot plot4;
     // plot4.size(1280, 720);
     plot4.fontName("Palatino");
-    plot4.fontSize(20);
+    plot4.fontSize(14);
     plot4.legend()
         .atOutsideBottom()
         .displayHorizontal()
@@ -297,7 +297,7 @@ int main()
     Plot plot5;
     // plot5.size(1280, 720);
     plot5.fontName("Palatino");
-    plot5.fontSize(20);
+    plot5.fontSize(14);
     plot5.legend()
         .atOutsideBottom()
         .displayHorizontal()
@@ -314,5 +314,8 @@ int main()
     fig.palette("dark2");
     fig.size(1280, 720);
     fig.show();
+
+    // fig.save("ukf_results.pdf");
+    fig.save("ukf_results.png");
 
 }

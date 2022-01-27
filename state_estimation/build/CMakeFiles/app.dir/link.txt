@@ -1,1 +1,0 @@
-/usr/bin/c++  -std=c++17 -O3 -O3 -DNDEBUG  -rdynamic CMakeFiles/app.dir/test.cpp.o CMakeFiles/app.dir/ukf.cpp.o CMakeFiles/app.dir/redis/RedisClient.cpp.o CMakeFiles/app.dir/filter/ButterworthFilter.cpp.o  -o app  -Wl,-rpath,/usr/local/lib /usr/local/lib/libhiredis.so -ljsoncpp 

@@ -95,4 +95,7 @@ class NonlinearCalibration:
 			plt.figure(i)
 			plt.plot(np.arange(self.n_data), self.true_data[i, :], 'o', color='red')
 			plt.plot(np.arange(self.n_data), calibrated_data[i, :], 'x', color='blue')
+			plt.title('Sensor ' + str(i) + ' Calibration Verification')
+			plt.xlabel('Sample Point')
+			plt.ylabel('Value (Magnitude)')
 			plt.savefig('nonlinear' + str(i) + '.png')

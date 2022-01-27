@@ -35,6 +35,7 @@ class UKF
 								const Vector6d& tau,
 								const Matrix3d& rot_in_world);
 		void filterAccel();
+		void updateVelocity();
 		void computeSigmaPoints(const Vector6d& state, const Matrix6d& P);
 		Vector6d propagateState(const Vector6d& state, 
                                 	const Vector6d& tau, 
@@ -70,7 +71,7 @@ class UKF
 
 		// Sensors
 		Vector3d m_accel;
-		Vector3d m_vel;  // filtered and integrated accel
+		Vector3d m_vel;  // integrated accel measurement
 		Vector3d m_gyro;
 		Vector6d m_tau;
 		Matrix3d m_rot_in_world;  // from inertial frame to body frame 

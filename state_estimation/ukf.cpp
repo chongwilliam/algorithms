@@ -79,6 +79,10 @@ void UKF::updateSensors(const Vector3d& accel,
 void UKF::filterAccel()
 {
     m_accel = filter->update(m_accel);
+}
+
+void UKF::updateVelocity()
+{
     m_vel = m_rot_in_world * m_state.head(3) + m_accel * m_dt;  // "velocity" body measurement
 }
 
@@ -180,7 +184,8 @@ void UKF::updatePosterior()
 
 void UKF::updateStep()
 {
-    filterAccel();
+    // filterAccel();
+    updateVelocity();
     computeSigmaPoints(m_state, m_P);
     unscentedTransformDynamics();
     computeSigmaPoints(m_state, m_P);  // redraw sigma points (optional, but better results)
