@@ -20,7 +20,7 @@ int main()
 {
     // Filter parameters 
     double alpha = 1e-2;  // 1e-4 to 1e0
-    double ki = 0;  // tunable
+    double ki = 0;  // tunable, usually set to zero
     int L = 6;  
     double lambda = alpha * alpha * ((double) L + ki) - (double) L;
     double filter_dt = 1. / 1000;  
@@ -127,7 +127,7 @@ int main()
             Vector3d accel_sensor;
             Vector3d gyro_sensor;
             for (int j = 0; j < 3; ++j) {
-                accel_sensor(j) = accel(j) + accel_dist(generator);  // probably needs zero mean
+                accel_sensor(j) = accel(j) + accel_dist(generator);  
                 gyro_sensor(j) = velocity(j + 3) + gyro_dist(generator);
             }
 
@@ -159,7 +159,8 @@ int main()
     }
 
     std::cout << "Average filter update time: " << timings.sum() / timings.size() << " ms" << std::endl;
-    std::cout << "Number of filter update: " << timings.size() << std::endl;
+    std::cout << "Number of filter updates: " << cnt << std::endl;
+    std::cout << "Number of simulation updates: " << N << std::endl;
 
     // Draw plots
     Vec time_vector = linspace(0, N * sim_dt, N);

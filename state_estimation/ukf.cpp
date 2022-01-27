@@ -19,13 +19,13 @@ UKF::UKF(const double lambda,
 {
     // Initialize redis and smoothing filter 
     redis_client = new RedisClient();
-    filter = new ButterworthFilter(3);  // cutoff frequency needs to be tuned 
+    filter = new ButterworthFilter(3);  // cutoff frequency needs to be tuned; can also move out of filter
     // double sampling_rate = 1. / 1000;  // if needed for filter cutoff computation 
     double cutoff_freq = 0.1;
     filter->setCutoffFrequency(cutoff_freq);
 
     // UKF parameters 
-    m_L = 6;
+    m_L = 6;  // dimension of state [linear velocity; angular velocity]
     m_dt = dt;
     m_alpha = alpha;
     m_beta = 2;  // optimal for gaussian distribution 
@@ -148,7 +148,7 @@ void UKF::unscentedTransformSensors()
 
     // Observed body sensor readings from state sigma points 
     for (int i = 0; i < n_points; ++i) {
-        m_meas_sigma_points[i] = R * m_state_sigma_points[i];
+        m_meas_sigma_points[i] = R * m_state_sigma_points_prop[i];
     }
 
     // Compute mean
@@ -188,7 +188,7 @@ void UKF::updateStep()
     updateVelocity();
     computeSigmaPoints(m_state, m_P);
     unscentedTransformDynamics();
-    computeSigmaPoints(m_state, m_P);  // redraw sigma points (optional, but better results)
+    computeSigmaPoints(m_state, m_P);  // redraw sigma points (optional)
     unscentedTransformSensors();
     updatePosterior();
 }
