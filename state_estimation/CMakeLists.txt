@@ -24,9 +24,10 @@ elseif (CMAKE_SYSTEM_NAME MATCHES Linux)
 	include_directories("${JSONCPP_INCLUDE_DIRS}")
 endif ()
 
-# plotting
-find_package(sciplot)
+# plotting (disable if running source)
+# find_package(sciplot)
 
 add_executable(app test.cpp ukf.cpp redis/RedisClient.cpp filter/ButterworthFilter.cpp)
-target_link_libraries(app ${HIREDIS_LIBRARY} ${JSONCPP_LIBRARIES} sciplot::sciplot)
+# target_link_libraries(app ${HIREDIS_LIBRARY} ${JSONCPP_LIBRARIES} sciplot::sciplot)
+target_link_libraries(app ${HIREDIS_LIBRARY} ${JSONCPP_LIBRARIES})
 

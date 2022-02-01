@@ -7,8 +7,6 @@
 #include <eigen3/Eigen/Dense>
 #include "redis/RedisClient.h"
 #include "filter/ButterworthFilter.h"
-
-#include <iostream>
 #include <vector>
 using namespace std;
 
@@ -69,11 +67,11 @@ class UKF
 		vector<double> m_state_weights;
 		vector<double> m_cov_weights;
 
-		// Sensors
-		Vector3d m_accel;
-		Vector3d m_vel;  // integrated accel measurement
-		Vector3d m_gyro;
-		Vector6d m_tau;
+		// Sensors 
+		Vector3d m_accel;  // body frame; from O1K
+		Vector3d m_vel;  // integrated
+		Vector3d m_gyro;  // body frame; from O1K
+		Vector6d m_tau;  // inertial frame; from O1K
 		Matrix3d m_rot_in_world;  // from inertial frame to body frame 
 
 		// Inertia

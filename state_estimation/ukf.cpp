@@ -3,6 +3,15 @@
  * @brief Runs an unscented kalman filter for SRBD (single rigid body dynamics).
 */
 
+/* 
+    Ocean1K Parameters:
+    Mass: 364.610 kilograms
+    Inertia: 
+        [21.221 0 0;
+            0, 108.823, 0;
+            0, 0, 110.108]
+*/
+
 #include "ukf.h"
 
 namespace Filter {
@@ -70,7 +79,7 @@ void UKF::updateSensors(const Vector3d& accel,
                             const Vector6d& tau,
                             const Matrix3d& rot_in_world)
 {
-    m_accel = accel;  // body frame
+    m_accel = accel - rot_in_world * m_gravity;  // body frame subtracting gravity bias 
     m_gyro = gyro;  // body frame
     m_tau = tau;  // inertial frame
     m_rot_in_world = rot_in_world;  // from inertial frame to body frame 
@@ -105,14 +114,14 @@ Vector6d UKF::propagateState(const Vector6d& state,
                                 const double dt)
 {
     // Compute acceleration
-    Vector3d w = state.tail(3);
+    Vector3d w = state.tail(3);  // inertial frame
     Vector6d nonlinear;
     nonlinear.head(3).setZero();  
     nonlinear.tail(3) = w.cross(m_I * w);
-    Vector6d state_accel = m_M_inv * (tau - nonlinear);
+    Vector6d state_accel = m_M_inv * (tau - nonlinear);  // tau in inertial frame 
 
     // Forward time integration
-    return state + state_accel * dt;
+    return state + state_accel * dt;  // inertial frame 
 }
 
 void UKF::unscentedTransformDynamics()
@@ -148,7 +157,7 @@ void UKF::unscentedTransformSensors()
 
     // Observed body sensor readings from state sigma points 
     for (int i = 0; i < n_points; ++i) {
-        m_meas_sigma_points[i] = R * m_state_sigma_points_prop[i];
+        m_meas_sigma_points[i] = R * m_state_sigma_points[i];
     }
 
     // Compute mean
@@ -186,11 +195,11 @@ void UKF::updateStep()
 {
     // filterAccel();
     updateVelocity();
-    computeSigmaPoints(m_state, m_P);
-    unscentedTransformDynamics();
-    computeSigmaPoints(m_state, m_P);  // redraw sigma points (optional)
-    unscentedTransformSensors();
-    updatePosterior();
+    computeSigmaPoints(m_state, m_P);  // updates vector of sigma points 
+    unscentedTransformDynamics();  // updates vector of sigma points prop, m_state, and m_P
+    computeSigmaPoints(m_state, m_P);  // updates vector of sigma points (matches the propagated state)
+    unscentedTransformSensors();  // uses redrawn sigma points; changes m_meas, m_Pyy, m_Pxy
+    updatePosterior();  // computes innovation change; changes m_state and m_P
 }
 
 }  // namespace filter 

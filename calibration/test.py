@@ -64,7 +64,12 @@ if __name__ == '__main__':
 	# n_sensors = 4
 	# n_data = 14
 	# cal = NonlinearCalibration(n_sensors, n_data)
-	# cal_data = np.loadtxt('torques.txt')
+	# cal_data = np.loadtxt('sensed_torques.txt')
+	# cal_truth_data = np.loadtxt('true_torques.txt')
+
+	# Re-name in case there needs additional processing
+	# tau_measured = cal_data
+	# tau_actual = cal_truth_data
 
 	# # Calibrate sensors
 	# cal.read_data(tau_measured, tau_actual)
